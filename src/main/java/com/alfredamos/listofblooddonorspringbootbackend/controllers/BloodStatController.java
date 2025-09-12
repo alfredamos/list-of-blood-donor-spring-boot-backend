@@ -3,7 +3,6 @@ package com.alfredamos.listofblooddonorspringbootbackend.controllers;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.BloodStatCreate;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.BloodStatDto;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.BloodStatUpdate;
-import com.alfredamos.listofblooddonorspringbootbackend.mapper.BloodStatMapper;
 import com.alfredamos.listofblooddonorspringbootbackend.services.BloodStatService;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +13,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.http.ResponseEntity.*;
-
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/blood-stats")
 public class BloodStatController {
     private final BloodStatService bloodStatService;
-    private final BloodStatMapper bloodStatMapper;
 
-   @PostMapping
+    @PostMapping
     public ResponseEntity<BloodStatDto> createBloodStat(BloodStatCreate bloodStatRequest) {
         var bloodStat = bloodStatService.createBloodStat(bloodStatRequest);
 

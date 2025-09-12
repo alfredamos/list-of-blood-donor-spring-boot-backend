@@ -1,14 +1,14 @@
 package com.alfredamos.listofblooddonorspringbootbackend.services;
 
-import com.alfredamos.listofblooddonorspringbootbackend.dto.DonorDetailCreate;
-import com.alfredamos.listofblooddonorspringbootbackend.dto.DonorDetailDto;
-import com.alfredamos.listofblooddonorspringbootbackend.dto.DonorDetailUpdate;
-import com.alfredamos.listofblooddonorspringbootbackend.entities.DonorDetail;
+import com.alfredamos.listofblooddonorspringbootbackend.dto.VitalCreate;
+import com.alfredamos.listofblooddonorspringbootbackend.dto.VitalDto;
+import com.alfredamos.listofblooddonorspringbootbackend.dto.VitalUpdate;
+import com.alfredamos.listofblooddonorspringbootbackend.entities.Vital;
 import com.alfredamos.listofblooddonorspringbootbackend.entities.User;
 import com.alfredamos.listofblooddonorspringbootbackend.exceptions.NotFoundException;
-import com.alfredamos.listofblooddonorspringbootbackend.mapper.DonorDetailMapper;
-import com.alfredamos.listofblooddonorspringbootbackend.repositories.DonorDetailRepository;
+import com.alfredamos.listofblooddonorspringbootbackend.mapper.*;
 import com.alfredamos.listofblooddonorspringbootbackend.repositories.UserRepository;
+import com.alfredamos.listofblooddonorspringbootbackend.repositories.VitalRepository;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.SameUserAndAdmin;
 import lombok.RequiredArgsConstructor;
@@ -18,16 +18,16 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
-@RequiredArgsConstructor
 @Service
-public class DonorDetailService {
-    private final DonorDetailRepository donorDetailRepository;
+@RequiredArgsConstructor
+public class VitalService {
+    private final VitalRepository vitalRepository;
     private final AuthService authService;
-    private final DonorDetailMapper donorDetailMapper;
+    private final VitalMapper vitalMapper;
     private final UserRepository userRepository;
     private final SameUserAndAdmin sameUserAndAdmin;
 
-    public DonorDetailDto createDonorDetail(DonorDetailCreate donorDetailRequest) {
+    public VitalDto createVital(VitalCreate vitalRequest) {
         //----> Fetch the user that creates the donor-detail.
         var user = authService.getUserFromContext();
 
@@ -35,74 +35,74 @@ public class DonorDetailService {
         sameUserAndAdmin.checkForOwnerShipOrAdmin(user.getId());
 
         //----> map the donor-detail-request to donor-detail.
-        var donorDetail = donorDetailMapper.toEntity(donorDetailRequest);
-        donorDetail.setUser(user); //----> Set the user on the blood-stat.
+        var vital = vitalMapper.toEntity(vitalRequest);
+        vital.setUser(user); //----> Set the user on the blood-stat.
 
         //----> save the donor-detail in the database.
-        var newDonorDetail = donorDetailRepository.save(donorDetail);
+        var newVital = vitalRepository.save(vital);
 
         //----> Send back the result.
-        return donorDetailMapper.toDTO(newDonorDetail);
+        return vitalMapper.toDTO(newVital);
     }
 
-    public ResponseMessage deleteDonorDetail(UUID id) {
+    public ResponseMessage deleteVital(UUID id) {
         //----> Fetch the donor-detail to be deleted.
-        var donorDetail = fetchDonorDetailById(id);
+        var vital = fetchVitalById(id);
 
         //----> Check for ownership or admin privilege.
-        sameUserAndAdmin.checkForOwnerShipOrAdmin(donorDetail.getUser().getId());
+        sameUserAndAdmin.checkForOwnerShipOrAdmin(vital.getUser().getId());
 
         //----> Delete the donor-detail with the given id.
-        donorDetailRepository.delete(donorDetail);
+        vitalRepository.delete(vital);
 
         //----> Send back the response.
-        return new ResponseMessage("DonorDetail has been deleted successfully!", "success", HttpStatus.OK);
+        return new ResponseMessage("Vital has been deleted successfully!", "success", HttpStatus.OK);
     }
 
-    public DonorDetailDto editDonorDetailById(UUID id, DonorDetailUpdate donorDetailRequest) {
+    public VitalDto editVitalById(UUID id, VitalUpdate vitalRequest) {
         //----> Fetch the donor-detail to be updated.
-        var detailOfDonor = fetchDonorDetailById(id);
+        var vitalDb = fetchVitalById(id);
 
         //----> Check for ownership or admin privilege.
-        sameUserAndAdmin.checkForOwnerShipOrAdmin(detailOfDonor.getUser().getId());
+        sameUserAndAdmin.checkForOwnerShipOrAdmin(vitalDb.getUser().getId());
 
         //----> Map the donor-detail-request to donor-detail.
-        var donorDetail = donorDetailMapper.toEntity(donorDetailRequest);
+        var vital = vitalMapper.toEntity(vitalRequest);
 
         //----> Get the user associated with this donor-detail.
         var user = authService.getUserFromContext();
-        donorDetail.setUser(user);
+        vital.setUser(user);
 
         //----> Save the edited donor-detail in the database.
-        donorDetailRepository.save(donorDetail);
+        vitalRepository.save(vital);
 
         //----> Send back the result.
-        return donorDetailMapper.toDTO(donorDetail);
+        return vitalMapper.toDTO(vital);
     }
 
-    public DonorDetailDto findDonorDetailById(UUID id) {
+    public VitalDto findVitalById(UUID id) {
         //----> Fetch the donor-detail.
-        var donorDetail = fetchDonorDetailById(id);
+        var vital = fetchVitalById(id);
 
         //----> Check for ownership or admin privilege.
-        sameUserAndAdmin.checkForOwnerShipOrAdmin(donorDetail.getUser().getId());
+        sameUserAndAdmin.checkForOwnerShipOrAdmin(vital.getUser().getId());
 
         //----> Send back the result.
-        return donorDetailMapper.toDTO(donorDetail);
+        return vitalMapper.toDTO(vital);
     }
 
-    public List<DonorDetailDto> findAllDonorDetails() {
+    public List<VitalDto> findAllVitals() {
         //----> Only admin can perform this action.
         sameUserAndAdmin.checkForAdmin();
 
         //----> fetch all the donor-details from the database.
-        var donorDetails = donorDetailRepository.findAll();
+        var vitals = vitalRepository.findAll();
 
         //----> send back the results.
-        return donorDetailMapper.toDTOList(donorDetails);
+        return vitalMapper.toDTOList(vitals);
     }
 
-    public ResponseMessage deleteDonorDetailByUserId(UUID userId) {
+    public ResponseMessage deleteVitalByUserId(UUID userId) {
         //----> Fetch the user whose donor-details are to be deleted.
         var user = fetchUserById(userId);
 
@@ -110,37 +110,37 @@ public class DonorDetailService {
         sameUserAndAdmin.checkForOwnerShipOrAdmin(user.getId());
 
         //----> delete donor-details associated with this user.
-        donorDetailRepository.deleteDonorDetailByUser(user);
+        vitalRepository.deleteVitalByUser(user);
 
-        return new ResponseMessage("DonorDetail has been deleted successfully!", "success", HttpStatus.OK);
+        return new ResponseMessage("Vital has been deleted successfully!", "success", HttpStatus.OK);
     }
 
-    public ResponseMessage deleteAllDonorDetails() {
+    public ResponseMessage deleteAllVitals() {
         //----> Only admin can perform this action.
         sameUserAndAdmin.checkForAdmin();
 
         //----> Delete all donor-details.
-        donorDetailRepository.deleteAll();
+        vitalRepository.deleteAll();
 
         //----> Send back response.
-        return new ResponseMessage("DonorDetail has been deleted successfully!", "success", HttpStatus.OK);
+        return new ResponseMessage("Vital has been deleted successfully!", "success", HttpStatus.OK);
     }
 
-    public List<DonorDetailDto> findDonorDetailByUserId(UUID userId) {
+    public List<VitalDto> findVitalByUserId(UUID userId) {
         var user = fetchUserById(userId); //----> fetch the user with this user-id.
 
         //----> Check for ownership or admin privilege.
         sameUserAndAdmin.checkForOwnerShipOrAdmin(user.getId());
 
         //----> Fetch all donor-details associate with this user.
-        var donorDetails = donorDetailRepository.findDonorDetailByUser(user);
+        var vitals = vitalRepository.findVitalByUser(user);
 
         //----> Send back the response.
-        return donorDetailMapper.toDTOList(donorDetails);
+        return vitalMapper.toDTOList(vitals);
     }
 
-    private DonorDetail fetchDonorDetailById(UUID id) {
-        return donorDetailRepository.findById(id).orElseThrow(() -> new NotFoundException("Donor detail not found"));
+    private Vital fetchVitalById(UUID id) {
+        return vitalRepository.findById(id).orElseThrow(() -> new NotFoundException("Donor detail not found"));
     }
 
     private User fetchUserById(UUID id) {

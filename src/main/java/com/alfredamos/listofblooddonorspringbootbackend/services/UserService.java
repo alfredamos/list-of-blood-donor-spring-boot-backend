@@ -6,6 +6,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.exceptions.NotFoundExcep
 import com.alfredamos.listofblooddonorspringbootbackend.mapper.UserMapper;
 import com.alfredamos.listofblooddonorspringbootbackend.repositories.UserRepository;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
+import com.alfredamos.listofblooddonorspringbootbackend.utils.SameUserAndAdmin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final SameUserAndAdmin sameUserAndAdmin;
 
     public User getUserByEmail(String email) {
         return userRepository.findUserByEmail(email);
@@ -25,12 +27,10 @@ public class UserService {
 
     public ResponseMessage deleteUserById(UUID id) {
         //----> Check for existence of user.
-        var exists = userRepository.existsById(id);
+        var user = fetchUser(id);
 
-        //----> Throw error if user does nt exist.
-        if (!exists) {
-            throw new NotFoundException("User not found");
-        }
+        //----> Check for same user or admin privilege.
+        sameUserAndAdmin.checkForOwnerShipOrAdmin(user.getId());
 
         //----> Delete the user with the given id from database.
         userRepository.deleteById(id);
@@ -41,15 +41,25 @@ public class UserService {
 
     public UserDto getUserById(UUID id) {
         //----> Check for existence of user.
-        var user = userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found in the database!"));
+        var user = fetchUser(id);
+
+        //----> Check for same user or admin privilege.
+        sameUserAndAdmin.checkForOwnerShipOrAdmin(user.getId());
 
         //----> Send back the response.
         return userMapper.toDTO(user);
     }
 
     public List<UserDto> getAllUsers() {
+        //----> Only admin can perform this action
+        sameUserAndAdmin.checkForAdmin();
+
         //----> Get all users from the database.
         var users = userRepository.findAll();
         return userMapper.toDTOList(users);
+    }
+
+    private User fetchUser(UUID id) {
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found in the database!"));
     }
 }

@@ -10,7 +10,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.dto.Signup;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.UserDto;
 import com.alfredamos.listofblooddonorspringbootbackend.mapper.AuthMapper;
 import com.alfredamos.listofblooddonorspringbootbackend.mapper.UserMapper;
-import com.alfredamos.listofblooddonorspringbootbackend.repositories.UserRepository;
+import com.alfredamos.listofblooddonorspringbootbackend.repositories.AuthRepository;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,16 +19,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService{
-    private final UserRepository userRepository;
+    private final AuthRepository authRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthMapper authMapper;
     private final UserMapper userMapper;
@@ -57,7 +58,7 @@ public class AuthService{
         user.setPassword(hashedPassword);
 
         //----> Update the user in the database.
-        userRepository.save(user);
+        authRepository.save(user);
 
         //----> Send back the response.
         return new ResponseMessage("Password has been changed successfully!", "Success", HttpStatus.OK);
@@ -80,7 +81,7 @@ public class AuthService{
 
         //----> Save the edited profile
         editedUser.setId(user.getId());
-        userRepository.save(editedUser);
+        authRepository.save(editedUser);
 
         //----> Send back the response.
         return new ResponseMessage("User profile has been edited successfully!", "Success", HttpStatus.OK);
@@ -109,19 +110,31 @@ public class AuthService{
         user.setAge(LocalDate.now().getYear() - user.getDateOfBirth().getYear());
 
         //----> save the new user in the database.
-        userRepository.save(user);
+        authRepository.save(user);
 
         //----> Send back the response.
         return new ResponseMessage("Signup is successful!", "Success", HttpStatus.CREATED);
     }
 
-    public ResponseMessage getLoginAccess(Login login, HttpServletResponse response) {
+    public ResponseMessage getLoginAccess(Login login, HttpServletResponse response) throws AuthenticationException {
         //----> Authenticate user.
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(login.getEmail(), login.getPassword()));
+        var loginAction = new UsernamePasswordAuthenticationToken(login.getEmail(), login.getPassword());
+        //----> Check authentication status.
+
+        var authLogin = authenticationManager.authenticate(loginAction);
+
+        System.out.println("authLogin: " + authLogin);
+
+        //----> Check authentication status.
+        if (!authLogin.isAuthenticated()) {
+            System.out.println("Not authenticated, At point 2");
+            throw new AuthenticationException("Invalid credentials");
+        }
+
+        System.out.println("authenticated: " + authLogin.isAuthenticated());
 
         //----> Get the authenticated user.
-        var user = userRepository.findUserByEmail(login.getEmail());
+        var user = authRepository.findUserByEmail(login.getEmail());
 
         //----> Get access token.
         var accessToken = jwtService.generateAccessToken(user);
@@ -168,27 +181,15 @@ public class AuthService{
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
         var email = (String) authentication.getPrincipal();
-        var userDto = this.userMapper.toDTO(this.userRepository.findUserByEmail(email));
+        var userDto = this.userMapper.toDTO(this.authRepository.findUserByEmail(email));
 
         if (userDto == null){
-            throw  new NotFoundException("Current user is not found!");
+            throw  new UnAuthorizedException("Invalid credential!");
         }
 
         return userDto;
     }
 
-    public User getUserFromContext(){
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        var email = (String) authentication.getPrincipal();
-        var user = userRepository.findUserByEmail(email);
-
-        if (user == null){
-            throw  new NotFoundException("Current user is not found!");
-        }
-
-        return user;
-    }
 
     public String getRefreshToken(String refreshToken, HttpServletResponse response){
         var jwt = jwtService.parseToken(refreshToken);
@@ -197,7 +198,7 @@ public class AuthService{
             throw new UnAuthorizedException("Invalid credentials!");
         }
 
-        var user = this.userRepository.findById(jwt.getUserId()).orElseThrow();
+        var user = this.authRepository.findById(jwt.getUserId()).orElseThrow();
 
         var accessToken = jwtService.generateAccessToken(user);
 
@@ -210,7 +211,18 @@ public class AuthService{
         return  accessToken.toString();
     }
 
+    public User getUserFromContext(){
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        var email = (String) authentication.getPrincipal();
+        var user = authRepository.findUserByEmail(email);
+
+        if (user == null){
+            throw  new UnAuthorizedException("Invalid credential!");
+        }
+
+        return user;
+    }
 
     private void checkPasswordMatch(String password, String confirmPassword){
         //----> Check for match between confirm-password and password.
@@ -230,7 +242,7 @@ public class AuthService{
     }
 
     private User foundUserByEmail(String email, String mode){
-        var user = userRepository.findUserByEmail(email);
+        var user = authRepository.findUserByEmail(email);
         if (mode.equalsIgnoreCase(AuthActionType.edit)) {
             if (user == null) {
                 throw new NotFoundException("Invalid credential!");

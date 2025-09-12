@@ -1,6 +1,7 @@
 package com.alfredamos.listofblooddonorspringbootbackend.controllers;
 
 import com.alfredamos.listofblooddonorspringbootbackend.dto.*;
+import com.alfredamos.listofblooddonorspringbootbackend.exceptions.AuthenticationException;
 import com.alfredamos.listofblooddonorspringbootbackend.services.AuthParams;
 import com.alfredamos.listofblooddonorspringbootbackend.services.AuthService;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
@@ -39,7 +40,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody Login login, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody Login login, HttpServletResponse response) throws AuthenticationException {
+
         var result = authService.getLoginAccess(login, response);
 
         return ResponseEntity.ok(result);
