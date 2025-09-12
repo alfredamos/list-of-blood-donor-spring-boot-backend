@@ -36,10 +36,10 @@ public class BloodStatService {
         bloodStat.setUser(user);
 
         //----> Save the blood stat in the database.
-        bloodStatRepository.save(bloodStat);
+        var newBloodStat = bloodStatRepository.save(bloodStat);
 
         //----> send back the result.
-        return bloodStatMapper.toDTO(bloodStat);
+        return bloodStatMapper.toDTO(newBloodStat);
 
     }
 
@@ -98,7 +98,7 @@ public class BloodStatService {
     }
 
 
-    public ResponseMessage deleteAllBloodStatsByUserId(UUID userId) {
+    public ResponseMessage deleteBloodStatsByUserId(UUID userId) {
         //----> Fetch user with the given user-id.
         var user = fetchUserById(userId);
 

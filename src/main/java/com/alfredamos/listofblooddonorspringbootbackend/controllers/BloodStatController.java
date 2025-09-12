@@ -60,7 +60,7 @@ public class BloodStatController {
 
     @DeleteMapping("/delete-by-user-id/{userId}")
     public ResponseEntity<ResponseMessage> deleteBloodStatByUserId(@PathVariable(value = "userId") UUID userId) {
-       var response = bloodStatService.deleteAllBloodStatsByUserId(userId);
+       var response = bloodStatService.deleteBloodStatsByUserId(userId);
 
        return ResponseEntity.ok(response);
     }
