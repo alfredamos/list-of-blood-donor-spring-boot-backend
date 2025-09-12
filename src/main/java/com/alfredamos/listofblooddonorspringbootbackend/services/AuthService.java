@@ -22,6 +22,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.Date;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService{
@@ -72,6 +75,7 @@ public class AuthService{
         checkForCorrectPassword(password, user.getPassword());
 
         //----> Map edit-profile request to user
+        editProfileRequest.setPassword(user.getPassword());
         var editedUser = authMapper.toEntity(editProfileRequest);
 
         //----> Save the edited profile
@@ -94,13 +98,15 @@ public class AuthService{
         //----> Check for existence of user.
         foundUserByEmail(email, AuthActionType.create);
 
+        //----> Hash password.
+        var hashedPassword = passwordEncoder.encode(password);
+        signup.setPassword(hashedPassword); //----> Set the hashed password.
+
         //----> Map signup user to user.
         var user = authMapper.toEntity(signup);
 
-        //----> Hash password.
-        var hashedPassword = passwordEncoder.encode(password);
-        user.setPassword(hashedPassword); //----> Set the hashed password.
-
+        //----> Calculate the user's age.
+        user.setAge(LocalDate.now().getYear() - user.getDateOfBirth().getYear());
 
         //----> save the new user in the database.
         userRepository.save(user);
@@ -140,7 +146,7 @@ public class AuthService{
         return new ResponseMessage("Success", "Login is successful!", HttpStatus.OK);
     }
 
-    public void removeLoginAccess(HttpServletResponse response){
+    public ResponseMessage removeLoginAccess(HttpServletResponse response){
         //----> Remove accessToken
         var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, null, 0, AuthParams.accessTokenPath));
 
@@ -153,6 +159,8 @@ public class AuthService{
 
         //----> Add refresh-cookie to a response object.
         response.addCookie(refreshCookie);
+
+        return new ResponseMessage("Success", "Login is successful!", HttpStatus.OK);
 
     }
 
@@ -168,6 +176,27 @@ public class AuthService{
 
         return userDto;
     }
+
+    public String getRefreshToken(String refreshToken, HttpServletResponse response){
+        var jwt = jwtService.parseToken(refreshToken);
+
+        if (jwt == null || jwt.isExpired()){
+            throw new UnAuthorizedException("Invalid credentials!");
+        }
+
+        var user = this.userRepository.findById(jwt.getUserId()).orElseThrow();
+
+        var accessToken = jwtService.generateAccessToken(user);
+
+        //----> Put the access-token in the access-cookie.
+        var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, accessToken, (int)this.jwtConfig.getAccessTokenExpiration(), AuthParams.accessTokenPath
+        ));
+
+        response.addCookie(accessCookie);
+
+        return  accessToken.toString();
+    }
+
 
 
     private void checkPasswordMatch(String password, String confirmPassword){
