@@ -22,7 +22,4 @@ public class DonorDetailCreate {
 
     @NotBlank(message = "Type is required.")
     private DonoType Type;
-
-    @NotBlank(message = "UserId is required.")
-    private UUID userId;
 }

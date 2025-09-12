@@ -177,6 +177,19 @@ public class AuthService{
         return userDto;
     }
 
+    public User getUserFromContext(){
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        var email = (String) authentication.getPrincipal();
+        var user = userRepository.findUserByEmail(email);
+
+        if (user == null){
+            throw  new NotFoundException("Current user is not found!");
+        }
+
+        return user;
+    }
+
     public String getRefreshToken(String refreshToken, HttpServletResponse response){
         var jwt = jwtService.parseToken(refreshToken);
 

@@ -22,6 +22,4 @@ public class BloodStatUpdate {
     @NotBlank(message = "BloodGroup is required.")
     private String bloodGroup;
 
-    @NotBlank(message = "UserId is required.")
-    private UUID userId;
 }

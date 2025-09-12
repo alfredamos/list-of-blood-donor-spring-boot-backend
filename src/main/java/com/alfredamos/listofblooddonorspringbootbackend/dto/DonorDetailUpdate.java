@@ -26,6 +26,4 @@ public class DonorDetailUpdate {
     @NotBlank(message = "Type is required.")
     private DonoType Type;
 
-    @NotBlank(message = "UserId is required")
-    private String userId;
 }

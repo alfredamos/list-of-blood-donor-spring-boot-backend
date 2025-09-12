@@ -28,6 +28,4 @@ public class VitalCreate {
     @NotBlank(message = "Weight is required.")
     private Double weight;
 
-    @NotBlank(message = "UserId is required.")
-    private UUID userId;
 }
