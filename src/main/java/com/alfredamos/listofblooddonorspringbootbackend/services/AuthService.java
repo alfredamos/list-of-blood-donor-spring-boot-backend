@@ -170,26 +170,6 @@ public class AuthService{
         return new ResponseMessage("Success", "Login is successful!", HttpStatus.OK);
     }
 
-    public ResponseMessage removeLoginAccess(HttpServletResponse response)throws UnAuthorizedException{
-        System.out.println("I am right here in logout !!!!!");
-        //----> Remove accessToken
-        var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, null, 0, AuthParams.accessTokenPath));
-
-        //----> Add access-cookie to a response object.
-
-        response.addCookie(accessCookie);
-
-
-        //----> Remove refresh-cookie.
-        var refreshCookie = makeCookie(new CookieParameter(AuthParams.refreshToken, null, 0, AuthParams.refreshTokenPath));
-
-        //----> Add refresh-cookie to a response object.
-        response.addCookie(refreshCookie);
-
-        return new ResponseMessage("Success", "Logout is successful!", HttpStatus.OK);
-
-    }
-
     public UserDto getCurrentUser(){
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -205,15 +185,34 @@ public class AuthService{
 
 
     public String getRefreshToken(String refreshToken, HttpServletResponse response){
+        //----> Get the authenticated user.
+        var user = getUserFromContext();
+
+        //----> Revoke the previous access-token before getting a new one.
+        revokedAllUserTokens(user);
+
+        //----> Initialize a token
+        var token = new Token();
+        token.setUser(user);
+
         var jwt = jwtService.parseToken(refreshToken);
 
         if (jwt == null || jwt.isExpired()){
             throw new UnAuthorizedException("Invalid credentials!");
         }
 
-        var user = this.authRepository.findById(jwt.getUserId()).orElseThrow();
-
+        //----> Get Access-token.
         var accessToken = jwtService.generateAccessToken(user);
+        token.setAccessToken(accessToken.toString()); //----> Set access-token.
+        token.setRefreshToken(refreshToken); //----> set refresh-token.
+
+        //----> Set the token-type and invalidate the token.
+        token.setTokenType(TokenType.Bearer);
+        token.setExpired(false);
+        token.setExpired(false);
+
+        //----> save the new token in the database.
+        tokenRepository.save(token);
 
         //----> Put the access-token in the access-cookie.
         var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, accessToken, (int)this.jwtConfig.getAccessTokenExpiration(), AuthParams.accessTokenPath

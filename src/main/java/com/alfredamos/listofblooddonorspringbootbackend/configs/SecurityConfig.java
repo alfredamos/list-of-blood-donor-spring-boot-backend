@@ -63,8 +63,6 @@ class SecurityConfig {
                             response.setStatus(HttpStatus.FORBIDDEN.value());
                         }));
 
-
-
                     }).logout(logout -> //SecurityContextHolder.clearContext();
                             logout // Configure logout
                             .logoutUrl("/api/auth/logout")// The URL that triggers logout
@@ -72,8 +70,7 @@ class SecurityConfig {
                             .logoutSuccessHandler((request, response, authentication) -> {
                                         SecurityContextHolder.clearContext();
                             })
-                           // .logoutSuccessUrl("/api/auth/login?logout")
-                    ); // Redirect after successful logout
+                    );
 
 
             return http.build();
