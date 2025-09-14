@@ -2,10 +2,7 @@ package com.alfredamos.listofblooddonorspringbootbackend.entities;
 
 import com.alfredamos.listofblooddonorspringbootbackend.validations.ValueOfEnum;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.Date;
@@ -14,6 +11,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -59,5 +57,8 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<DonorDetail> donorDetails;
+
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
 }

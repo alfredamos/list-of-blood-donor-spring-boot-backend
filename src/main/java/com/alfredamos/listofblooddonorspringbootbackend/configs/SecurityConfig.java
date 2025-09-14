@@ -1,9 +1,9 @@
 package com.alfredamos.listofblooddonorspringbootbackend.configs;
 
 import com.alfredamos.listofblooddonorspringbootbackend.entities.Role;
-import com.alfredamos.listofblooddonorspringbootbackend.exceptions.AuthenticationException;
-import com.alfredamos.listofblooddonorspringbootbackend.filters.JwtAuthenticationFilter;
+import com.alfredamos.listofblooddonorspringbootbackend.filters.JwtAuthenticationFilter2;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -22,12 +22,15 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 @EnableGlobalAuthentication
 class SecurityConfig {
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    //private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter2 jwtAuthenticationFilter2;
+    private final LogoutService logoutService;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -52,7 +55,7 @@ class SecurityConfig {
                             .anyRequest().authenticated()
 
 
-                    ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                    ).addFilterBefore(jwtAuthenticationFilter2, UsernamePasswordAuthenticationFilter.class)
                     .exceptionHandling(c -> {
                         c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
                         c.accessDeniedHandler(((request, response, accessDeniedException) -> {
@@ -62,7 +65,16 @@ class SecurityConfig {
 
 
 
-                    });
+                    }).logout(logout -> //SecurityContextHolder.clearContext();
+                            logout // Configure logout
+                            .logoutUrl("/api/auth/logout")// The URL that triggers logout
+                            .addLogoutHandler(logoutService)
+                            .logoutSuccessHandler((request, response, authentication) -> {
+                                        SecurityContextHolder.clearContext();
+                            })
+                           // .logoutSuccessUrl("/api/auth/login?logout")
+                    ); // Redirect after successful logout
+
 
             return http.build();
     }

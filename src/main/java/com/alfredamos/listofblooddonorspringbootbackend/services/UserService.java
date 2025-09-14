@@ -56,7 +56,9 @@ public class UserService {
 
         //----> Get all users from the database.
         var users = userRepository.findAll();
-        return userMapper.toDTOList(users);
+        return users.stream().map(userMapper::toDTO).toList();
+
+
     }
 
     private User fetchUser(UUID id) {

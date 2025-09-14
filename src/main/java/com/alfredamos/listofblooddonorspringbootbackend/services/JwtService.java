@@ -26,14 +26,11 @@ public class JwtService {
 
     }
 
-    public Jwt parseToken(String token){
-        try{
-            var claims = getClaims(token);
+    public Jwt parseToken(String token)throws JwtException {
 
-            return new Jwt(claims, jwtConfig.getSecretKey());
-        }catch (JwtException ex){
-            throw new UnAuthorizedException(ex.getMessage());
-        }
+        var claims = getClaims(token);
+
+       return new Jwt(claims, jwtConfig.getSecretKey());
     }
 
     private Jwt generateToken(User user, long tokenExpiration) {
@@ -47,15 +44,10 @@ public class JwtService {
                 .expiration(new Date(System.currentTimeMillis() + milliSeconds * tokenExpiration))
                 .build();
 
-
         return new Jwt(claims, jwtConfig.getSecretKey());
     }
 
-    private Claims getClaims(String token){
-        if (token.isEmpty()) {
-            throw new UnAuthorizedException("Invalid credential!");
-
-        }
+    private Claims getClaims(String token) throws UnAuthorizedException {
 
         return Jwts.parser()
                 .verifyWith(jwtConfig.getSecretKey())

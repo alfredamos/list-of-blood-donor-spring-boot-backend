@@ -1,21 +1,27 @@
 package com.alfredamos.listofblooddonorspringbootbackend.controllers;
 
+import com.alfredamos.listofblooddonorspringbootbackend.exceptions.UnAuthorizedException;
+
 import com.alfredamos.listofblooddonorspringbootbackend.exceptions.*;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.servlet.ServletException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ServerErrorException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.core.AuthenticationException;
 
+import java.io.IOException;
+import java.lang.IllegalArgumentException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,6 +46,15 @@ public class GlobalExceptionHandler {
 
         // TODO send this stack trace to an observability tool
        //exception.printStackTrace()
+        System.out.println("In globalExceptionHandler ex : " + ex);
+
+        //System.out.println("Global exception handler" + ex.getMessage());
+        if (ex instanceof CredentialsExpiredException){
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), ex.getMessage());
+            errorDetail.setProperty("description", "The username or password is incorrect");
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetail);
+        }
 
         //----> Bad credentials.
         if (ex instanceof BadCredentialsException) {
@@ -49,12 +64,21 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetail);
         }
 
-        //----> Authorization exception
+        //----> Access-denied exception
         if (ex instanceof AccessDeniedException) {
+            System.out.println("I am in the right place!!!!!!");
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), ex.getMessage());
             errorDetail.setProperty("description", "Invalid credentials");
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetail);
+        }
+
+        //----> Internal-authentication-service-exception.
+        if (ex instanceof InternalAuthenticationServiceException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), "Internal authentication issues with login credentials!");
+            errorDetail.setProperty("description", "Invalid credentials");
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorDetail);
         }
 
         //----> Authentication exception
@@ -65,18 +89,9 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetail);
         }
 
-        //----> Account status expiration.
-        if (ex instanceof AccountStatusException) {
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), ex.getMessage());
-            errorDetail.setProperty("description", "The account is locked");
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorDetail);
-        }
-
-        //----> Account status expiration.
-        if (ex instanceof InternalAuthenticationServiceException) {
-            System.out.println("Internal authentication service exception");
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), "Internal authentication issues with login credentials!");
+        //----> Illegal-argument-exception.
+        if (ex instanceof IllegalArgumentException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), "Internal authentication issues with login credentials!");
             errorDetail.setProperty("description", "Invalid credentials");
 
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorDetail);
@@ -118,7 +133,8 @@ public class GlobalExceptionHandler {
         }
 
         if (ex instanceof UnAuthorizedException){
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), ex.getMessage());
+            System.out.println("I am in the right place!!!!!!");
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), "Problems with invalid credentials and authorization related issues!");
             errorDetail.setProperty("description", "Invalid credentials!");
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorDetail);
@@ -131,6 +147,29 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetail);
         }
 
+        if (ex instanceof JwtException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
+            errorDetail.setProperty("description", "Unknown internal server error.");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetail);
+        }
+
+        if (ex instanceof ServletException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
+            errorDetail.setProperty("description", "authentication issues with login credentials affecting routing!.");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetail);
+        }
+
+        //----> Server error
+        if (ex instanceof IOException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
+            errorDetail.setProperty("description", "Input and output error.");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetail);
+        }
+
+        //----> Server error
         if (ex instanceof ServerErrorException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
             errorDetail.setProperty("description", "Unknown internal server error.");

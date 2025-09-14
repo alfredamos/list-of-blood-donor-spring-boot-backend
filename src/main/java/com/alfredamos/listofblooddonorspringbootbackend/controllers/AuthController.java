@@ -8,7 +8,6 @@ import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,12 +46,6 @@ public class AuthController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
-        var result = authService.removeLoginAccess(response);
-
-        return ResponseEntity.ok(result);
-    }
 
     @PostMapping("/refresh")
     public ResponseEntity<JwtResponse> refresh(@CookieValue(value = AuthParams.refreshToken) String refreshToken, HttpServletResponse response){

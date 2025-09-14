@@ -1,6 +1,7 @@
 package com.alfredamos.listofblooddonorspringbootbackend.services;
 
 import com.alfredamos.listofblooddonorspringbootbackend.entities.Role;
+import com.alfredamos.listofblooddonorspringbootbackend.exceptions.UnAuthorizedException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.AllArgsConstructor;
@@ -29,10 +30,12 @@ public class Jwt {
 
     public String getUserEmail(){
         return claims.get("email", String.class);
-        //return claims.get("email", String.class);
     }
 
     public String toString(){
+        if (claims.isEmpty()){
+            throw new UnAuthorizedException("Invalid claims");
+        }
         return Jwts.builder()
                 .claims(claims)
                 .signWith(secretKey)

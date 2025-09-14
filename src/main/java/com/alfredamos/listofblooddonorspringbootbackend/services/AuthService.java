@@ -1,5 +1,7 @@
 package com.alfredamos.listofblooddonorspringbootbackend.services;
 
+import com.alfredamos.listofblooddonorspringbootbackend.entities.Token;
+import com.alfredamos.listofblooddonorspringbootbackend.entities.TokenType;
 import com.alfredamos.listofblooddonorspringbootbackend.exceptions.*;
 import com.alfredamos.listofblooddonorspringbootbackend.entities.User;
 import com.alfredamos.listofblooddonorspringbootbackend.configs.JwtConfig;
@@ -11,6 +13,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.dto.UserDto;
 import com.alfredamos.listofblooddonorspringbootbackend.mapper.AuthMapper;
 import com.alfredamos.listofblooddonorspringbootbackend.mapper.UserMapper;
 import com.alfredamos.listofblooddonorspringbootbackend.repositories.AuthRepository;
+import com.alfredamos.listofblooddonorspringbootbackend.repositories.TokenRepository;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,10 +22,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -36,6 +37,7 @@ public class AuthService{
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final JwtConfig jwtConfig;
+    private final TokenRepository tokenRepository;
 
     public ResponseMessage changePassword(ChangePassword changePasswordRequest){
         //----> Get the email, old-password, new-password, confirm-password
@@ -116,28 +118,26 @@ public class AuthService{
         return new ResponseMessage("Signup is successful!", "Success", HttpStatus.CREATED);
     }
 
-    public ResponseMessage getLoginAccess(Login login, HttpServletResponse response) throws AuthenticationException {
+    public ResponseMessage getLoginAccess(Login login, HttpServletResponse response) {
         //----> Authenticate user.
         var loginAction = new UsernamePasswordAuthenticationToken(login.getEmail(), login.getPassword());
-        //----> Check authentication status.
 
-        var authLogin = authenticationManager.authenticate(loginAction);
-
-        System.out.println("authLogin: " + authLogin);
-
-        //----> Check authentication status.
-        if (!authLogin.isAuthenticated()) {
-            System.out.println("Not authenticated, At point 2");
-            throw new AuthenticationException("Invalid credentials");
-        }
-
-        System.out.println("authenticated: " + authLogin.isAuthenticated());
+        //----> Authenticate user.
+        authenticationManager.authenticate(loginAction);
 
         //----> Get the authenticated user.
         var user = authRepository.findUserByEmail(login.getEmail());
 
+        //----> Revoke the previous access-token before getting a new one.
+        revokedAllUserTokens(user);
+
+        //----> Initialize a token
+        var token = new Token();
+        token.setUser(user);
+
         //----> Get access token.
         var accessToken = jwtService.generateAccessToken(user);
+        token.setAccessToken(accessToken.toString());
 
         //----> Put the access-token in the access-cookie.
         var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, accessToken, (int)jwtConfig.getAccessTokenExpiration(), AuthParams.accessTokenPath
@@ -148,6 +148,17 @@ public class AuthService{
 
         //----> Get refresh-token
         var refreshToken = this.jwtService.generateRefreshToken(user);
+        token.setRefreshToken(refreshToken.toString());
+
+        token.setTokenType(TokenType.Bearer);
+        token.setExpired(false);
+        token.setExpired(false);
+
+        System.out.println("token : " + token);
+
+        //----> save the new token in the database.
+        tokenRepository.save(token);
+
 
         //----> Put the refresh-token in refresh-cookie.
         var refreshCookie = makeCookie(new CookieParameter(AuthParams.refreshToken, refreshToken, (int)this.jwtConfig.getRefreshTokenExpiration(), AuthParams.refreshTokenPath
@@ -159,11 +170,13 @@ public class AuthService{
         return new ResponseMessage("Success", "Login is successful!", HttpStatus.OK);
     }
 
-    public ResponseMessage removeLoginAccess(HttpServletResponse response){
+    public ResponseMessage removeLoginAccess(HttpServletResponse response)throws UnAuthorizedException{
+        System.out.println("I am right here in logout !!!!!");
         //----> Remove accessToken
         var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, null, 0, AuthParams.accessTokenPath));
 
         //----> Add access-cookie to a response object.
+
         response.addCookie(accessCookie);
 
 
@@ -173,7 +186,7 @@ public class AuthService{
         //----> Add refresh-cookie to a response object.
         response.addCookie(refreshCookie);
 
-        return new ResponseMessage("Success", "Login is successful!", HttpStatus.OK);
+        return new ResponseMessage("Success", "Logout is successful!", HttpStatus.OK);
 
     }
 
@@ -223,6 +236,20 @@ public class AuthService{
 
         return user;
     }
+
+    public void revokedAllUserTokens(User user){
+        var validUserTokens = tokenRepository.findAllValidTokensByUser(user.getId());
+
+        if (!validUserTokens.isEmpty()){
+            validUserTokens.forEach(token -> {
+                token.setRevoked(true);
+                token.setRevoked(false);
+            });
+            tokenRepository.saveAll(validUserTokens);
+        }
+
+    }
+
 
     private void checkPasswordMatch(String password, String confirmPassword){
         //----> Check for match between confirm-password and password.

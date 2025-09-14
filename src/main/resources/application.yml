@@ -26,6 +26,6 @@ spring:
       prefix: /
 server:
   port: 5000
-
-
+  error:
+    include-stacktrace: never
 
