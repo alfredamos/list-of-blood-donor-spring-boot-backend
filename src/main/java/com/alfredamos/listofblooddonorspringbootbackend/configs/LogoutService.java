@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 @Service
@@ -23,15 +24,16 @@ public class LogoutService implements LogoutHandler {
         var accessCookies = request.getCookies(); //----> Get all cookies.
         var accessToken = mySpecificCookieValue(accessCookies); //---> Get access-token.
 
-        //----> Fetch the tokens saved in the database.
-        var storedToken = tokenRepository.findByAccessToken(accessToken);
+        //----> Get the first valid token.
+
+        var storedAccessToken = tokenRepository.findByAccessToken(accessToken);
 
         //----> Invalidate the tokens by setting expire and revoke to through.
-        if (storedToken.isPresent()) {
-            storedToken.get().setExpired(true);
-            storedToken.get().setRevoked(true);
+        if (storedAccessToken.isPresent()) {
+            storedAccessToken.get().setExpired(true);
+            storedAccessToken.get().setRevoked(true);
 
-            tokenRepository.save(storedToken.get());
+            tokenRepository.save(storedAccessToken.get());
         }
     }
 

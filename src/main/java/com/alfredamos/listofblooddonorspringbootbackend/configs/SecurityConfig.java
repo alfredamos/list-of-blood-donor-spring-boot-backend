@@ -2,7 +2,6 @@ package com.alfredamos.listofblooddonorspringbootbackend.configs;
 
 import com.alfredamos.listofblooddonorspringbootbackend.entities.Role;
 import com.alfredamos.listofblooddonorspringbootbackend.filters.JwtAuthenticationFilter2;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -66,7 +65,7 @@ class SecurityConfig {
                     }).logout(logout -> //SecurityContextHolder.clearContext();
                             logout // Configure logout
                             .logoutUrl("/api/auth/logout")// The URL that triggers logout
-                            .addLogoutHandler(logoutService)
+                            .addLogoutHandler(logoutService::logout)
                             .logoutSuccessHandler((request, response, authentication) -> {
                                         SecurityContextHolder.clearContext();
                             })

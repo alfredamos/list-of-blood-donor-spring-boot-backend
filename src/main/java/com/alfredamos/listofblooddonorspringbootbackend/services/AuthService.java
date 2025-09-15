@@ -152,9 +152,7 @@ public class AuthService{
 
         token.setTokenType(TokenType.Bearer);
         token.setExpired(false);
-        token.setExpired(false);
-
-        System.out.println("token : " + token);
+        token.setRevoked(false);
 
         //----> save the new token in the database.
         tokenRepository.save(token);
@@ -185,41 +183,68 @@ public class AuthService{
 
 
     public String getRefreshToken(String refreshToken, HttpServletResponse response){
-        //----> Get the authenticated user.
-        var user = getUserFromContext();
-
-        //----> Revoke the previous access-token before getting a new one.
-        revokedAllUserTokens(user);
-
-        //----> Initialize a token
-        var token = new Token();
-        token.setUser(user);
-
+        //----> Parse the refresh-token.
         var jwt = jwtService.parseToken(refreshToken);
 
-        if (jwt == null || jwt.isExpired()){
+        if (jwt.isExpired()){
             throw new UnAuthorizedException("Invalid credentials!");
         }
 
-        //----> Get Access-token.
+        //----> Get the user-email.
+        var email = jwt.getUserEmail();
+
+        //----> Get the current-user.
+        var user = authRepository.findUserByEmail(email);
+
+        //----> Get the first valid token.
+        var validToken = tokenRepository.findAllValidTokensByUser(user.getId()).getFirst();
+
+        //----> Check for valid token.
+        if (validToken.isRevoked() && validToken.isExpired()){
+            throw new UnAuthorizedException("Invalid token!");
+        }
+
+        //----> Revoke the previous token before getting a new one.
+        revokedAllUserTokens(user);
+
+        //----> Create new token.
+        var newToken = new Token();
+
+        //----> Set user on the new token.
+        newToken.setUser(user);
+
+        //----> Get new access-token.
         var accessToken = jwtService.generateAccessToken(user);
-        token.setAccessToken(accessToken.toString()); //----> Set access-token.
-        token.setRefreshToken(refreshToken); //----> set refresh-token.
 
-        //----> Set the token-type and invalidate the token.
-        token.setTokenType(TokenType.Bearer);
-        token.setExpired(false);
-        token.setExpired(false);
+        //----> Set access-token on token object.
+        newToken.setAccessToken(accessToken.toString());
 
-        //----> save the new token in the database.
-        tokenRepository.save(token);
+        //----> Get new refresh-token.
+        var newRefreshToken = jwtService.generateRefreshToken(user);
+
+        //----> Set refresh-token on token object.
+        newToken.setRefreshToken(newRefreshToken.toString());
+
+        //----> Set the token-type and set expired and revoked to false.
+        newToken.setTokenType(TokenType.Bearer);
+        newToken.setExpired(false);
+        newToken.setRevoked(false);
+
+        //----> save the edited token object in the database.
+        tokenRepository.save(newToken);
 
         //----> Put the access-token in the access-cookie.
         var accessCookie = makeCookie(new CookieParameter(AuthParams.accessToken, accessToken, (int)this.jwtConfig.getAccessTokenExpiration(), AuthParams.accessTokenPath
         ));
 
-        response.addCookie(accessCookie);
+        response.addCookie(accessCookie);//----> Put the access-token in the access-cookie.
 
+        var refreshCookie = makeCookie(new CookieParameter(AuthParams.refreshToken, newRefreshToken, (int)this.jwtConfig.getRefreshTokenExpiration(), AuthParams.refreshTokenPath
+        ));
+
+        response.addCookie(refreshCookie);
+
+        //----> Send back the new access-token.
         return  accessToken.toString();
     }
 
@@ -239,13 +264,13 @@ public class AuthService{
     public void revokedAllUserTokens(User user){
         var validUserTokens = tokenRepository.findAllValidTokensByUser(user.getId());
 
-        if (!validUserTokens.isEmpty()){
-            validUserTokens.forEach(token -> {
-                token.setRevoked(true);
-                token.setRevoked(false);
-            });
-            tokenRepository.saveAll(validUserTokens);
-        }
+        if (validUserTokens.isEmpty()) return;
+        validUserTokens.forEach(token -> {
+            token.setExpired(true);
+            token.setRevoked(true);
+        });
+        tokenRepository.saveAll(validUserTokens);
+
 
     }
 
