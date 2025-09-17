@@ -3,6 +3,7 @@ package com.alfredamos.listofblooddonorspringbootbackend.dto;
 import com.alfredamos.listofblooddonorspringbootbackend.entities.Address;
 import com.alfredamos.listofblooddonorspringbootbackend.entities.Gender;
 import com.alfredamos.listofblooddonorspringbootbackend.entities.Role;
+import com.alfredamos.listofblooddonorspringbootbackend.validations.ValueOfEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class EditProfile {
     @NotBlank(message = "Phone is required.")
     private String phone;
 
+    @ValueOfEnum(enumClass = Gender.class, message = "It must be either a Male or Female")
     private Gender gender;
 
     @NotBlank(message = "Image is required.")

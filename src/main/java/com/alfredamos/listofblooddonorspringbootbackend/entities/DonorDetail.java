@@ -1,5 +1,6 @@
 package com.alfredamos.listofblooddonorspringbootbackend.entities;
 
+import com.alfredamos.listofblooddonorspringbootbackend.validations.ValueOfEnum;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,8 +24,9 @@ public class DonorDetail {
     @Column(nullable = false)
     private Integer numberOfDonations;
 
-    @Column(nullable = false)
-    private DonoType Type;
+    @ValueOfEnum(enumClass = Category.class)
+    @Enumerated(EnumType.STRING)
+    private Category category;
 
     @ManyToOne
     @JoinColumn(name = "userId")

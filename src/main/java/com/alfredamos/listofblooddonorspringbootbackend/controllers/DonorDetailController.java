@@ -5,6 +5,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.dto.DonorDetailDto;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.DonorDetailUpdate;
 import com.alfredamos.listofblooddonorspringbootbackend.services.DonorDetailService;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class DonorDetailController {
     private final DonorDetailService donorDetailService;
 
     @PostMapping
-    public ResponseEntity<DonorDetailDto> createDonorDetail(DonorDetailCreate donorDetailRequest) {
+    public ResponseEntity<DonorDetailDto> createDonorDetail(@Valid @RequestBody DonorDetailCreate donorDetailRequest) {
         var donorDetailDto = donorDetailService.createDonorDetail(donorDetailRequest);
 
         return ResponseEntity.ok(donorDetailDto);
@@ -47,7 +48,7 @@ public class DonorDetailController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<DonorDetailDto> editDonorDetailById(@PathVariable(value = "id") UUID id, DonorDetailUpdate donorDetailRequest) {
+    public ResponseEntity<DonorDetailDto> editDonorDetailById(@PathVariable(value = "id") UUID id, @Valid @RequestBody DonorDetailUpdate donorDetailRequest) {
         var donorDetail = donorDetailService.editDonorDetailById(id, donorDetailRequest);
 
         return ResponseEntity.ok(donorDetail);

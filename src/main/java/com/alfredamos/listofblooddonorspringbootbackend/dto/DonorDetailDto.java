@@ -1,6 +1,6 @@
 package com.alfredamos.listofblooddonorspringbootbackend.dto;
 
-import com.alfredamos.listofblooddonorspringbootbackend.entities.DonoType;
+import com.alfredamos.listofblooddonorspringbootbackend.entities.Category;
 import lombok.*;
 
 import java.util.UUID;
@@ -13,6 +13,6 @@ public class DonorDetailDto {
     private UUID id;
     private Double volumePerDonation;
     private Integer numberOfDonations;
-    private DonoType Type;
+    private Category category;
     private UUID userId;
 }

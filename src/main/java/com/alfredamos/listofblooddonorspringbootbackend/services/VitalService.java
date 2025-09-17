@@ -14,6 +14,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.utils.SameUserAndAdmin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -102,6 +103,7 @@ public class VitalService {
         return vitalMapper.toDTOList(vitals);
     }
 
+    @Transactional
     public ResponseMessage deleteVitalByUserId(UUID userId) {
         //----> Fetch the user whose donor-details are to be deleted.
         var user = fetchUserById(userId);

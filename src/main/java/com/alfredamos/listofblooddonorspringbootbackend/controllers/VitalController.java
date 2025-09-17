@@ -5,6 +5,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.dto.VitalDto;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.VitalUpdate;
 import com.alfredamos.listofblooddonorspringbootbackend.services.VitalService;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,12 +15,12 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/vitals")
+@RequestMapping("/api/vitals")
 public class VitalController {
     private final VitalService vitalService;
 
     @PostMapping
-    public ResponseEntity<VitalDto> createVital(VitalCreate vitalRequest) {
+    public ResponseEntity<VitalDto> createVital(@Valid @RequestBody VitalCreate vitalRequest) {
         var vitalDto = vitalService.createVital(vitalRequest);
 
         return ResponseEntity.ok(vitalDto);
@@ -47,7 +48,7 @@ public class VitalController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<VitalDto> editVitalById(@PathVariable(value = "id") UUID id, VitalUpdate vitalRequest) {
+    public ResponseEntity<VitalDto> editVitalById(@PathVariable(value = "id") UUID id, @Valid @RequestBody VitalUpdate vitalRequest) {
         var vital = vitalService.editVitalById(id, vitalRequest);
 
         return ResponseEntity.ok(vital);

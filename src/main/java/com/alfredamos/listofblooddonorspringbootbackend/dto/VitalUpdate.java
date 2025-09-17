@@ -1,6 +1,7 @@
 package com.alfredamos.listofblooddonorspringbootbackend.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,22 +14,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class VitalUpdate {
-    @NotBlank(message = "Id is required.")
+    @NotNull(message = "Id is required.")
     private UUID id;
 
-    @NotBlank(message = "PressureUp is required.")
+    @NotNull(message = "PressureUp is required.")
     private Double pressureUp;
 
-    @NotBlank(message = "PressureLow is required.")
+    @NotNull(message = "PressureLow is required.")
     private Double pressureLow;
 
-    @NotBlank(message = "Temperature is required.")
+    @NotNull(message = "Temperature is required.")
     private Double temperature;
 
-    @NotBlank(message = "Height is required.")
+    @NotNull(message = "Height is required.")
     private Double height;
 
-    @NotBlank(message = "Weight is required.")
+    @NotNull(message = "Weight is required.")
     private Double weight;
 
 }

@@ -58,7 +58,6 @@ class SecurityConfig {
                     .exceptionHandling(c -> {
                         c.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
                         c.accessDeniedHandler(((request, response, accessDeniedException) -> {
-                            System.out.println("In security filter, request : " + request);
                             response.setStatus(HttpStatus.FORBIDDEN.value());
                         }));
 

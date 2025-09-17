@@ -1,4 +1,8 @@
 spring:
+  spring:
+    jackson:
+      deserialization:
+        read-unknown-enum-values-as-null: false
   application:
     name: online-meal
   datasource:

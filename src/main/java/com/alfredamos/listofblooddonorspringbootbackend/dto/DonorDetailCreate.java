@@ -1,25 +1,24 @@
 package com.alfredamos.listofblooddonorspringbootbackend.dto;
 
-import com.alfredamos.listofblooddonorspringbootbackend.entities.DonoType;
-import jakarta.validation.constraints.NotBlank;
+import com.alfredamos.listofblooddonorspringbootbackend.entities.Category;
+import com.alfredamos.listofblooddonorspringbootbackend.validations.ValueOfEnum;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class DonorDetailCreate {
-    @NotBlank(message = "VolumePerDonation is required.")
+    @NotNull(message = "VolumePerDonation is required.")
     private Double volumePerDonation;
 
-    @NotBlank(message = "NumberOfDonations is required.")
+    @NotNull(message = "NumberOfDonations is required.")
     private Integer numberOfDonations;
 
-    @NotBlank(message = "Type is required.")
-    private DonoType Type;
+    @ValueOfEnum(enumClass = Category.class, message = "It must be First or OneOf or Premium")
+    private Category category;
 }

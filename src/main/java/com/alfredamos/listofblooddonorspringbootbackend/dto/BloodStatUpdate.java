@@ -13,7 +13,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class BloodStatUpdate {
-    @NotBlank(message = "Id is required.")
     private UUID id;
 
     @NotBlank(message = "GenoType is required.")

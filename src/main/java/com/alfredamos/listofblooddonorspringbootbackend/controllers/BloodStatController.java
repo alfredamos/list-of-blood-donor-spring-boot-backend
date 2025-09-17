@@ -5,6 +5,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.dto.BloodStatDto;
 import com.alfredamos.listofblooddonorspringbootbackend.dto.BloodStatUpdate;
 import com.alfredamos.listofblooddonorspringbootbackend.services.BloodStatService;
 import com.alfredamos.listofblooddonorspringbootbackend.utils.ResponseMessage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class BloodStatController {
     private final BloodStatService bloodStatService;
 
     @PostMapping
-    public ResponseEntity<BloodStatDto> createBloodStat(BloodStatCreate bloodStatRequest) {
+    public ResponseEntity<BloodStatDto> createBloodStat(@Valid @RequestBody BloodStatCreate bloodStatRequest) {
         var bloodStat = bloodStatService.createBloodStat(bloodStatRequest);
 
         return new ResponseEntity<>(bloodStat, HttpStatus.CREATED);
@@ -48,7 +49,7 @@ public class BloodStatController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<BloodStatDto> editBloodStatById(@PathVariable(value = "id") UUID id, BloodStatUpdate bloodStatRequest) {
+    public ResponseEntity<BloodStatDto> editBloodStatById(@PathVariable(value = "id") UUID id, @Valid @RequestBody BloodStatUpdate bloodStatRequest) {
        var response = bloodStatService.editBloodStatById(id, bloodStatRequest);
 
        return ResponseEntity.ok(response);

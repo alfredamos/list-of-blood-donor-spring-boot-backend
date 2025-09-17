@@ -14,6 +14,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.utils.SameUserAndAdmin;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,7 @@ public class BloodStatService {
     private final UserRepository userRepository;
     private final SameUserAndAdmin sameUserAndAdmin;
 
+    @Transactional
     public BloodStatDto createBloodStat(BloodStatCreate bloodStatRequest) {
         //----> Get the user associated with the creation of this blood-stat.
         var user = fetchAuthUser();
@@ -120,7 +122,7 @@ public class BloodStatService {
         return new ResponseMessage("BloodStats deleted successfully!", "success", HttpStatus.OK);
     }
 
-
+    @Transactional
     public ResponseMessage deleteBloodStatsByUserId(UUID userId) {
         //----> Check for same-user or admin.
         sameUserAndAdmin.checkForOwnerShipOrAdmin(userId);

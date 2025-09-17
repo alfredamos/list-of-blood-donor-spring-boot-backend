@@ -6,6 +6,7 @@ import com.alfredamos.listofblooddonorspringbootbackend.exceptions.*;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.ServletException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -157,6 +158,13 @@ public class GlobalExceptionHandler {
         if (ex instanceof ServletException) {
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
             errorDetail.setProperty("description", "authentication issues with login credentials affecting routing!.");
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetail);
+        }
+
+        if (ex instanceof DataIntegrityViolationException) {
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(500), ex.getMessage());
+            errorDetail.setProperty("description", "duplicate is now allowed!.");
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetail);
         }
